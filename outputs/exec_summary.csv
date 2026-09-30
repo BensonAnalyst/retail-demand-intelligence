@@ -1,0 +1,8 @@
+kpi,before,after,note
+Forecast error (weekly WAPE),0.3121728562902647,0.13025745678809408,Excel 4-week average → global LightGBM
+Forecast bias (weekly),0.03363528671447195,0.00479013752286573,+ = over-forecast
+Fill rate,0.9352956650899666,0.9868606921239435,95% service-level policy
+Avg inventory value ($),163430.43296768714,111608.66486394557,working capital released
+Lost margin / yr ($),240523.54021045918,53171.57751913265,from stock-outs
+Regular-price margin opportunity / yr ($),0.0,466961.45702274994,±10% guardrail; validate by A/B test
+Loss-making promo depth-category combos,,12.0,of 20 evaluated

@@ -1,0 +1,25 @@
+{
+  "dq": {
+    "rows_in": 291811,
+    "r1_duplicates_removed": 873,
+    "r2_negative_units": 582,
+    "r3_price_outliers": 144,
+    "r4_missing_days_filled": 1462,
+    "r5_censored_stockout_days": 2828,
+    "rows_out": 292400
+  },
+  "psi": {
+    "rmean_28": 0.09348980002771769,
+    "selling_price": 0.17459920859248623,
+    "discount_pct": 0.0,
+    "rel_price": 0.6641608323108575
+  },
+  "segments": {
+    "smooth": 170,
+    "erratic": 90,
+    "lumpy": 80,
+    "intermittent": 60
+  },
+  "rows_gold": 292400,
+  "n_features": 32
+}
