@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 04 · Forecasting: rolling-origin backtest, model selection, MLflow, registry
 # MAGIC
@@ -25,7 +29,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install -q lightgbm==4.*
+# MAGIC %pip install -q lightgbm==4.* statsmodels
 # MAGIC %restart_python
 
 # COMMAND ----------

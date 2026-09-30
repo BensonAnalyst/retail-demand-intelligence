@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 05 · Inventory optimisation: from forecast to replenishment and dollars
 # MAGIC
@@ -70,6 +74,7 @@ ax.scatter(cur.avg_inventory_value, cur.fill_rate * 100, s=120, marker="X", colo
 ax.set_xlabel("Average inventory value ($)"); ax.set_ylabel("Fill rate (%)")
 ax.set_title("Service vs working capital: the forecast moves the whole frontier"); ax.legend(); ax.grid(alpha=.3)
 display(fig)
+plt.close(fig)
 
 # COMMAND ----------
 

@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 07 · Monitoring & business-impact summary
 # MAGIC
@@ -76,3 +80,36 @@ display(exec_df)
 # MAGIC `databricks.yml` defines a job that runs notebooks 01 → 07 in order. In production:
 # MAGIC * **Weekly** (Sunday night): 02 → 03 → score with `@champion` → 05 replenishment table → 07 health
 # MAGIC * **Monthly**: full backtest (04). Promote the challenger to `@champion` only if its weekly VN1 improves by more than 2% and bias stays within ±5%
+
+# COMMAND ----------
+
+# ===== RESULTS EXPORT: =====
+pd.set_option("display.width", 250); pd.set_option("display.max_columns", 30)
+def show(title, df, n=50):
+    print(f"\n### {title}\n" + df.head(n).round(4).to_string(index=False))
+
+t = lambda name: spark.table(f"{FQ}.{name}").toPandas()
+
+show("DQ SCORECARD", t("dq_scorecard"))
+seg = t("demand_segments")
+show("SEGMENTS", seg.groupby("segment").agg(series=("sku_id", "count"),
+     mean_daily=("mean_demand", "mean"), zero_share=("zero_share", "mean")).reset_index())
+show("LEADERBOARD", t("backtest_leaderboard")[["grain", "model", "wape", "mape", "bias", "vn1", "n"]])
+show("VN1 BY SEGMENT", t("backtest_by_segment").pivot(index="model", columns="segment", values="vn1").reset_index())
+show("WAPE PROMO(1) vs NON-PROMO(0)", t("backtest_by_promo").pivot(index="model", columns="on_promo", values="wape").reset_index())
+show("TOP FEATURES", t("feature_importance"), 10)
+show("INVENTORY POLICIES", t("inventory_policy_results"))
+show("INVENTORY BEFORE/AFTER", t("inventory_before_after"))
+show("PRICE RESPONSE", t("price_response")[["category", "elasticity_naive_no_trend", "elasticity", "elasticity_lo",
+     "elasticity_hi", "true_elasticity", "promo_uplift", "true_promo_uplift", "cannibalisation_per_sibling"]])
+show("PROMO ECONOMICS", t("promo_economics").pivot(index="depth", columns="category", values="incremental_margin").reset_index())
+pr = t("price_recommendations")
+print(f"\n### PRICE RECS: {len(pr)} SKUs | up {(pr.price_change_pct>0.001).sum()} | down {(pr.price_change_pct<-0.001).sum()} "
+      f"| capped at +10%: {(pr.price_change_pct.round(3)>=0.1).sum()} | annual gain ${pr.annual_margin_gain.sum():,.0f}")
+h = t("monitoring_weekly_health")
+print("\n### HEALTH STATUS COUNTS:", h.status.value_counts().to_dict())
+show("FEATURE DRIFT", t("monitoring_feature_drift"))
+show("EXEC SUMMARY", t("exec_summary"))
+f28 = t("forecast_28d")
+print(f"\n### FORECAST_28D: {len(f28):,} rows | {f28.date.min()} to {f28.date.max()} | "
+      f"model v{f28.model_version.iloc[0]} | total P50 {f28.p50.sum():,.0f}")

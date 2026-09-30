@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 06 · Pricing & promotion analytics
 # MAGIC
@@ -10,6 +14,11 @@
 # MAGIC
 # MAGIC **Method:** Poisson GLM per category with store-SKU fixed effects, SKU-level trends, day-of-week, month and holiday controls.
 # MAGIC Because the data is synthetic we **know the true elasticities**, so the estimator is *validated* here rather than taken on trust.
+
+# COMMAND ----------
+
+# MAGIC %pip install -q statsmodels
+# MAGIC %restart_python
 
 # COMMAND ----------
 

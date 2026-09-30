@@ -5,7 +5,7 @@
 # MAGIC
 # MAGIC | Setting | Default | Notes |
 # MAGIC |---|---|---|
-# MAGIC | `catalog` | `workspace` | Free Edition default catalog. Use your own UC catalog on a paid workspace. |
+# MAGIC | `catalog` | `workspace` | Free Edition default catalog. Use UC catalog on a paid workspace. |
 # MAGIC | `schema` | `retail_ds` | All Delta tables + the registered model live here. |
 # MAGIC | `n_stores` / `n_skus` | 10 / 40 | 400 store-SKU series × 731 days ≈ 292k rows. Scale up to test Spark parallelism. |
 
