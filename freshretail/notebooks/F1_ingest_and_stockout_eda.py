@@ -107,3 +107,21 @@ for i in np.where(o == 1)[0]:
 ax.set_xticks(range(0, 24 * 7, 24)); ax.set_xticklabels([d.strftime("%a %d %b") for d in df.loc[rows, "dt"]])
 ax.set_title("Last 7 days of one series: red = out of stock"); ax.legend(); ax.grid(alpha=.3)
 display(fig); plt.close(fig)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Is demand trending? (weekly level check)
+# MAGIC A forecaster that learns from the last 4 weeks will under-forecast if sales keep rising. This table shows the weekly level, so a level gap in F3 can be explained.
+# MAGIC Week 13 is partial if the training period is not a multiple of 7 days; the last rows are the 7 evaluation days.
+
+# COMMAND ----------
+
+wk = pd.DataFrame({"week": (df["day"] // 7).to_numpy(), "sales": full.sales.sum(1), "stockout_day": ~clean,
+                   "split": np.where(train_mask, "train", "eval")})
+weekly = (wk.groupby(["week", "split"])
+            .agg(days=("sales", "size"), avg_daily_sales=("sales", "mean"), stockout_day_share=("stockout_day", "mean"))
+            .reset_index())
+weekly["vs_first_4_weeks_pct"] = (weekly["avg_daily_sales"] / weekly.loc[weekly.week < 4, "avg_daily_sales"].mean() - 1) * 100
+write_table(weekly, "frn_weekly_trend")
+display(weekly)

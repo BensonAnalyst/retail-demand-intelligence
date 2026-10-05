@@ -141,9 +141,9 @@ class RecoveryModel:
 
 
 # ------------------------------------------------------------------ orchestration
-def recover(p: Panel, cutoff_day: int, seed: int = 42, with_model: bool = True) -> pd.DataFrame:
-    """Recovered daily demand for every row with day <= cutoff. Columns:
-    observed, rec_profile, rec_model (if with_model)."""
+def recover(p: Panel, cutoff_day: int, seed: int = 42, with_model: bool = True, return_model: bool = False):
+    """Recovered daily demand for every row (models fit on day <= cutoff only). Columns:
+    observed, rec_profile, rec_model (if with_model). return_model=True also returns the fitted RecoveryModel."""
     fit = (p.df["day"].to_numpy() <= cutoff_day)
     prof = hourly_profiles(p, clean_days(p) & fit)
     level = series_level(p, clean_days(p) & fit)
@@ -152,7 +152,23 @@ def recover(p: Panel, cutoff_day: int, seed: int = 42, with_model: bool = True) 
     if with_model:
         m = RecoveryModel(seed).fit(p, fit, prof, level)
         out["rec_model"] = m.predict(p, prof, level)
-    return out
+        if return_model:
+            return out, m
+    return (out, None) if return_model else out
+
+
+def feature_importance(model: "RecoveryModel") -> pd.DataFrame:
+    """Share of the recovery model's total gain per input: which inputs actually drive the estimate."""
+    b = model.model.booster_
+    imp = pd.DataFrame({"feature": b.feature_name(), "gain": b.feature_importance("gain")})
+    imp["gain_pct"] = imp["gain"] / imp["gain"].sum() * 100
+    groups = {"observed": "partial day", "oos_hours": "partial day", "first_oos_hour": "partial day",
+              "last_oos_hour": "partial day", "share_in": "profile hint", "profile_est": "profile hint",
+              "level": "series level", "discount": "promo", "activity_flag": "promo", "dow": "calendar",
+              "holiday_flag": "calendar", "avg_temperature": "weather", "precpt": "weather",
+              "third_category_id": "category"}
+    imp["group"] = imp["feature"].map(groups).fillna("other")
+    return imp.sort_values("gain_pct", ascending=False).reset_index(drop=True)
 
 
 def validate_recovery(p: Panel, cutoff_day: int, holdout_frac: float = 0.2, seed: int = 7) -> pd.DataFrame:

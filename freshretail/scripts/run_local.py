@@ -32,12 +32,12 @@ lap(f"loaded {len(full.df):,} rows; orientation check {chk}")
 val = recovery.validate_recovery(full, last_day)
 lap("recovery validation (masking test on held-out series):\n" + val.round(4).to_string(index=False))
 
-results = []
-for cutoff in (last_day - 7, last_day):
-    res, rec, _ = pipeline.run_fold(full, cutoff, log=lap)
-    results.append(res)
-res = pd.concat(results)
+res, horizon, scales, rec = pipeline.run_backtest(full, last_day, log=lap)
 print(res.round(4).to_string(index=False))
+print(scales.round(4).to_string(index=False))
+print(horizon.pivot_table(index="training_target", columns="horizon_days", values="wpe_bias").round(4).to_string())
+_, model = recovery.recover(full, last_day, return_model=True)
+print(recovery.feature_importance(model).round(2).to_string(index=False))
 
 total, by_cat, by_store, by_hour = pipeline.lost_demand_tables(full, rec, last_day)
 print(json.dumps(total, indent=2))

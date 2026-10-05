@@ -61,3 +61,11 @@ def test_forecast_lags_respect_horizon():
     s = fr[(fr.store_id == 0) & (fr.product_id == 0)].reset_index(drop=True)
     assert s.loc[20, "lag_7"] == s.loc[13, "y"]
     assert s.loc[20, "rmean_7"] == pytest.approx(s.loc[7:13, "y"].mean())
+
+
+def test_feature_importance_shares_sum_to_100():
+    p = _panel(n_days=30)
+    _, model = recovery.recover(p, 29, return_model=True)
+    imp = recovery.feature_importance(model)
+    assert imp["gain_pct"].sum() == pytest.approx(100)
+    assert set(imp["group"]) <= {"partial day", "profile hint", "series level", "promo", "calendar", "weather", "category", "other"}

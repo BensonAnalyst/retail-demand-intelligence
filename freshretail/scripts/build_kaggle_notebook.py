@@ -102,11 +102,9 @@ So **view A** (in-stock days only, the paper's protocol) skews towards low-deman
 On a simulation where true demand was known, view C tracked the true bias within about 1 point, while view A reversed the ranking.
 """)
 code("""
-results = []
-for cutoff in (last_day - 7, last_day):
-    res, rec, _ = pipeline.run_fold(full, cutoff)
-    results.append(res)
-results = pd.concat(results, ignore_index=True)
+results, horizon, scales, rec = pipeline.run_backtest(full, last_day)
+print("walk-forward calibration multipliers (learned on the previous week only):")
+display(scales.round(4))
 main = results[results.eval_view.str.match(r"^(A|B|C|C2)\\.")]
 print("BIAS (WPE): negative = under-forecast")
 display(main.pivot_table(index=["cutoff_day", "training_target"], columns="eval_view", values="wpe_bias").round(4))
@@ -115,6 +113,14 @@ display(main.pivot_table(index=["cutoff_day", "training_target"], columns="eval_
 """)
 code("""
 results[~results.eval_view.str.match(r"^(A|B|C|C2)\\.")].round(4)
+""")
+md("""
+**Calibration.** Rows marked `+ calibration` multiply the forecast by a factor learned on the *previous* week only.
+It removes a level gap shared by all models; it cannot remove censoring, so raw sales stay biased against recovered demand.
+Below: bias by days ahead, against recovered demand.
+""")
+code("""
+horizon.pivot_table(index="training_target", columns="horizon_days", values="wpe_bias").round(4)
 """)
 md("## 4. How much demand do empty shelves cost?")
 code("""

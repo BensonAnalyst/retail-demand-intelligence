@@ -35,33 +35,57 @@ user = spark.sql("SELECT current_user()").first()[0]
 mlflow.set_experiment(f"/Users/{user}/freshretail_censored_demand")
 full, last_day, _ = load_data()
 
-results = []
-with mlflow.start_run(run_name="raw_vs_recovered"):
-    mlflow.log_params({"n_series": N_SERIES, "horizon": 7, "folds": "last_train_week,official_eval"})
-    for cutoff in (last_day - 7, last_day):
-        res, _, _ = pipeline.run_fold(full, cutoff)
-        results.append(res)
-        for _, r in res[res["eval_view"].str[:2].isin(["A.", "C."])].iterrows():
-            name = re.sub(r"[^A-Za-z0-9]+", "_", r.training_target.split(":")[-1]).strip("_")
-            tag = f"c{cutoff}.{name}.view{r.eval_view[:1]}"
-            mlflow.log_metrics({f"{tag}.wape": r.wape, f"{tag}.bias": r.wpe_bias, f"{tag}.vn1": r.vn1})
-    results = pd.concat(results, ignore_index=True)
+with mlflow.start_run(run_name="raw_vs_recovered_calibrated"):
+    mlflow.log_params({"n_series": N_SERIES, "horizon": 7, "folds": "warmup(-14),last_train_week,official_eval",
+                       "calibration": "walk-forward, previous week own-target ratio"})
+    results, horizon, scales, _ = pipeline.run_backtest(full, last_day)
+    for _, r in results[results["eval_view"].str[:2].isin(["A.", "C."])].iterrows():
+        name = re.sub(r"[^A-Za-z0-9]+", "_", r.training_target.split(":")[-1]).strip("_")
+        tag = f"c{r.cutoff_day}.{name}.view{r.eval_view[:1]}"
+        mlflow.log_metrics({f"{tag}.wape": r.wape, f"{tag}.bias": r.wpe_bias, f"{tag}.vn1": r.vn1})
     mlflow.log_table(results, "forecast_results.json")
+    mlflow.log_table(horizon, "forecast_by_horizon.json")
 
 write_table(results, "frn_forecast_results")
-headline = results[results["eval_view"].str.match(r"^(A|B|C|C2)\.")]
-display(headline.pivot_table(index=["cutoff_day", "training_target"], columns="eval_view", values="wpe_bias").reset_index())
-
-# COMMAND ----------
-
-display(headline.pivot_table(index=["cutoff_day", "training_target"], columns="eval_view", values="wape").reset_index())
-display(results[~results["eval_view"].str.match(r"^(A|B|C|C2)\.")])
+write_table(horizon, "frn_forecast_by_horizon")
+write_table(scales, "frn_calibration_scales")
+display(scales)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### What to look for
-# MAGIC 1. **Bias under view C:** raw-sales training should come out clearly negative (under-forecasting). Recovered targets should sit near 0. This is the business case: under-forecasting means under-ordering, which means more empty shelves.
-# MAGIC 2. **Does the ranking flip under view A?** If raw sales look best only on in-stock days, that is the selection bias described above, not a better model.
-# MAGIC 3. **High-sale vs low-sale series:** the paper found recovery helps fast movers most and can over-correct slow movers. Check whether we see the same.
-# MAGIC 4. **Paper reference** (TimesNet recovery + TFT forecaster, view A): WAPE 31.75% → 29.02%, bias −7.37% → +2.58%. Our models are simpler; the aim is the direction and the reasoning, not to beat a deep-learning benchmark.
+# MAGIC ### Headline: bias and WAPE by evaluation view
+# MAGIC Rows without "+ calibration" are the original models (unchanged from the previous run). Rows **with** it multiply the forecast by a factor learned on the **previous week only** (walk-forward, no peeking), which removes a shared level gap. Calibration fixes the level; it cannot fix censoring, which is why raw sales stay biased in view C.
+
+# COMMAND ----------
+
+headline = results[results["eval_view"].str.match(r"^(A|B|C|C2)\.")]
+bias = headline.pivot_table(index=["cutoff_day", "training_target"], columns="eval_view", values="wpe_bias").reset_index()
+wape = headline.pivot_table(index=["cutoff_day", "training_target"], columns="eval_view", values="wape").reset_index()
+display(bias)
+display(wape)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Average of both folds (the numbers to quote)
+
+# COMMAND ----------
+
+avg = (headline.groupby(["training_target", "eval_view"])[["wape", "wpe_bias"]].mean()
+               .unstack("eval_view").round(4))
+display(avg.reset_index())
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Does the error grow further ahead? (view C, by days ahead)
+
+# COMMAND ----------
+
+display(horizon.pivot_table(index="training_target", columns="horizon_days", values="wpe_bias").round(4).reset_index())
+display(horizon.pivot_table(index="training_target", columns="horizon_days", values="wape").round(4).reset_index())
+
+# COMMAND ----------
+
+display(results[~results["eval_view"].str.match(r"^(A|B|C|C2)\.")])
