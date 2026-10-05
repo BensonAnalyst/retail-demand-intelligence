@@ -20,7 +20,8 @@ KEY = ["store_id", "product_id"]
 SCALARS = ["city_id", "store_id", "management_group_id", "first_category_id", "second_category_id",
            "third_category_id", "product_id", "dt", "sale_amount", "stock_hour6_22_cnt", "discount",
            "holiday_flag", "activity_flag", "precpt", "avg_temperature", "avg_humidity", "avg_wind_level"]
-OP_HOURS = slice(6, 23)  # store operating window 06:00-22:59, as in stock_hour6_22_cnt
+OP_HOURS = slice(6, 22)  # 06:00-21:59 (16 h): verified to match stock_hour6_22_cnt on 100% of rows
+N_OP_HOURS = OP_HOURS.stop - OP_HOURS.start
 
 
 @dataclass

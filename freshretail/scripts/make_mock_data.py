@@ -41,12 +41,12 @@ for store, prod in sorted(keys):
         for h in range(24):
             take = min(stock, demand_h[h])
             sold[h], stock = take, stock - take
-            if stock <= 1e-9 and 6 <= h <= 22:
+            if stock <= 1e-9 and 6 <= h <= 21:
                 oos[h] = 1
         rows.append(dict(city_id=store % 5, store_id=store, management_group_id=cat3 % 3,
                          first_category_id=cat3 % 4, second_category_id=cat3 % 8, third_category_id=cat3,
                          product_id=prod, dt=dt.strftime("%Y-%m-%d"), sale_amount=float(sold.sum()),
-                         hours_sale=sold.tolist(), stock_hour6_22_cnt=int(oos[6:23].sum()),
+                         hours_sale=sold.tolist(), stock_hour6_22_cnt=int(oos[6:22].sum()),
                          hours_stock_status=oos.tolist(), discount=float(disc),
                          holiday_flag=int(dow >= 5), activity_flag=int(disc < 1),
                          precpt=float(rng.gamma(1, 2)), avg_temperature=float(rng.normal(22, 4)),

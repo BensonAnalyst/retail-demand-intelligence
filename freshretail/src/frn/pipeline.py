@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from . import forecast, recovery
-from .data import KEY, OP_HOURS, Panel, add_day_index, check_oos_orientation, concat
+from .data import KEY, N_OP_HOURS, OP_HOURS, Panel, add_day_index, check_oos_orientation, concat
 
 TARGETS = {"observed": "raw sales (baseline)", "rec_profile": "recovered: profile scaling",
            "rec_model": "recovered: self-supervised LightGBM"}
@@ -64,15 +64,15 @@ def lost_demand_tables(full: Panel, rec: pd.DataFrame, cutoff: int, col: str = "
     d["lost"] = d["recovered"] - d["observed"]
     by_cat = (d.groupby("first_category_id")
                 .agg(recovered=("recovered", "sum"), lost=("lost", "sum"), oos_hours=("oos_hours", "mean"))
-                .assign(lost_share=lambda x: x.lost / x.recovered, availability=lambda x: 1 - x.oos_hours / 17)
+                .assign(lost_share=lambda x: x.lost / x.recovered, availability=lambda x: 1 - x.oos_hours / N_OP_HOURS)
                 .reset_index().sort_values("lost", ascending=False))
     by_store = (d.groupby("store_id")
                   .agg(recovered=("recovered", "sum"), lost=("lost", "sum"), oos_hours=("oos_hours", "mean"))
-                  .assign(lost_share=lambda x: x.lost / x.recovered, availability=lambda x: 1 - x.oos_hours / 17)
+                  .assign(lost_share=lambda x: x.lost / x.recovered, availability=lambda x: 1 - x.oos_hours / N_OP_HOURS)
                   .reset_index().sort_values("lost", ascending=False))
     hours = full.oos[(full.df["day"] <= cutoff).to_numpy()][:, OP_HOURS].mean(0)
-    by_hour = pd.DataFrame({"hour": range(6, 23), "oos_rate": hours})
+    by_hour = pd.DataFrame({"hour": range(OP_HOURS.start, OP_HOURS.stop), "oos_rate": hours})
     total = {"lost_share_of_demand": float(d["lost"].sum() / d["recovered"].sum()),
              "stockout_day_share": float((d["oos_hours"] > 0).mean()),
-             "availability_operating_hours": float(1 - d["oos_hours"].mean() / 17)}
+             "availability_operating_hours": float(1 - d["oos_hours"].mean() / N_OP_HOURS)}
     return total, by_cat, by_store, by_hour

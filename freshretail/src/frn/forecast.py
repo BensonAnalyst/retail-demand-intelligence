@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .data import KEY, OP_HOURS
+from .data import KEY, N_OP_HOURS, OP_HOURS
 from .metrics import summary
 
 H = 7
@@ -41,7 +41,7 @@ def build_frame(df: pd.DataFrame, oos: np.ndarray, target: np.ndarray) -> pd.Dat
     d["dow_mean"] = d[[f"lag_{L}" for L in LAGS]].mean(axis=1)
     oos_hist = d.groupby(KEY, sort=False)["oos_hours"].shift(H)
     d["oos_rate_14"] = oos_hist.groupby([d[k] for k in KEY]).transform(
-        lambda s: s.rolling(14, min_periods=1).mean()) / 17.0
+        lambda s: s.rolling(14, min_periods=1).mean()) / N_OP_HOURS
     d["dow"] = d["dt"].dt.dayofweek
     d["dom"] = d["dt"].dt.day
     d["disc_depth"] = 1 - d["discount"]

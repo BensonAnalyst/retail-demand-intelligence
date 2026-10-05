@@ -17,7 +17,7 @@ tot = rec["rec_model"].sum()
 kpis = pd.DataFrame([
     {"kpi": "Estimated demand lost to stock-outs (% of total)", "value": rec["lost"].sum() / tot * 100},
     {"kpi": "Store-product-days with a stock-out (%)", "value": (rec["oos_hours"] > 0).mean() * 100},
-    {"kpi": "Availability in operating hours 06-22 (%)", "value": (1 - rec["oos_hours"].mean() / 17) * 100},
+    {"kpi": "Availability in operating hours 06:00-21:59 (%)", "value": (1 - rec["oos_hours"].mean() / 16) * 100},
     {"kpi": "Lost demand concentrated in top 20% of stores (%)",
      "value": rec.groupby("store_id")["lost"].sum().sort_values(ascending=False)
                  .pipe(lambda s: s.head(max(1, len(s) // 5)).sum() / s.sum() * 100)},
@@ -29,7 +29,7 @@ display(kpis)
 
 by_cat = (rec.groupby("first_category_id")
             .agg(demand=("rec_model", "sum"), lost=("lost", "sum"), avg_oos_hours=("oos_hours", "mean"))
-            .assign(lost_pct=lambda d: d.lost / d.demand * 100, availability_pct=lambda d: (1 - d.avg_oos_hours / 17) * 100)
+            .assign(lost_pct=lambda d: d.lost / d.demand * 100, availability_pct=lambda d: (1 - d.avg_oos_hours / 16) * 100)
             .sort_values("lost", ascending=False).reset_index())
 write_table(by_cat, "frn_lost_by_category")
 display(by_cat)

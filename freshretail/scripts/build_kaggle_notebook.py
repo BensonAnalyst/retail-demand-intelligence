@@ -75,7 +75,7 @@ First a data-quality check: hours flagged out-of-stock should show close to zero
 code("""
 clean = recovery.clean_days(full)
 tr = (full.df["day"] <= last_day).to_numpy()
-print(f"stock-out days: {(~clean[tr]).mean():.1%} | availability 06-22h: {1-full.oos[tr][:, OP_HOURS].mean():.1%}")
+print(f"stock-out days: {(~clean[tr]).mean():.1%} | availability 06:00-21:59: {1-full.oos[tr][:, OP_HOURS].mean():.1%}")
 prof = full.sales[tr & clean].sum(0); prof = prof / prof.sum()
 fig, ax1 = plt.subplots(figsize=(9, 4))
 ax1.bar(range(24), prof * 100, color="#9db7d5", label="share of daily sales (in-stock days)")

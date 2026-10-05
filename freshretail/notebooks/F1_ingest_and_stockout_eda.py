@@ -54,7 +54,7 @@ clean = recovery.clean_days(full)
 train_mask = (df["day"] <= last_day).to_numpy()
 summary = pd.DataFrame([
     {"metric": "store-product-days (train)", "value": int(train_mask.sum())},
-    {"metric": "days with any stock-out in 06-22h", "value": float((~clean[train_mask]).mean())},
+    {"metric": "days with any stock-out in 06:00-21:59", "value": float((~clean[train_mask]).mean())},
     {"metric": "availability (in-stock share of operating hours)", "value": float(1 - full.oos[train_mask][:, OP_HOURS].mean())},
     {"metric": "avg stock-out hours on stock-out days", "value": float(full.oos[train_mask & ~clean][:, OP_HOURS].sum(1).mean())},
     {"metric": "avg daily sales, stock-out days", "value": float(full.sales[train_mask & ~clean].sum(1).mean())},

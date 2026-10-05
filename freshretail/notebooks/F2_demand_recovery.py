@@ -24,6 +24,7 @@
 # COMMAND ----------
 
 from frn import recovery
+from frn.data import OP_HOURS
 
 full, last_day, _ = load_data()
 val = recovery.validate_recovery(full, last_day, holdout_frac=0.2)
@@ -40,7 +41,7 @@ display(val)
 
 rec = recovery.recover(full, last_day)
 out = full.df[["store_id", "product_id", "dt", "day", "first_category_id", "third_category_id"]].copy()
-out["oos_hours"] = full.oos[:, 6:23].sum(1)
+out["oos_hours"] = full.oos[:, OP_HOURS].sum(1)
 out = pd.concat([out, rec], axis=1)
 out = out[out["day"] <= last_day]
 write_table(out, "frn_recovered_demand")
