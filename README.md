@@ -1,4 +1,7 @@
 # Retail Demand Intelligence on Databricks
+
+**Replaces a 14-day Excel stock rule with a validated forecast, cutting weekly forecast error 59% (31.2% to 12.9%) and simulated stock-out losses 81% on synthetic data.**
+
 **Demand forecasting → inventory optimisation → pricing & promo analytics → monitoring**, built end to end on the Databricks Lakehouse (Unity Catalog, Delta, MLflow, Spark `applyInPandas`, Jobs).
 
 > A regional retailer (10 stores × 40 SKUs, SG/MY calendar) replenishes stock with an Excel rule: *"keep 14 days of cover at the last-4-week average."* Stores run out during promos and 11.11/12.12, and carry excess slow-moving stock the rest of the year. This project replaces that rule with a validated forecast and measures the result in **dollars, not just accuracy**.
@@ -86,7 +89,7 @@ The reusable logic lives in `src/retail_ds/` (unit-tested). The notebooks tell t
 
 ---
 
-## JD → project mapping (Digital Place Vision, Senior Data Scientist)
+## What this project demonstrates
 
 | JD requirement | Where it is demonstrated |
 |---|---|
@@ -130,7 +133,7 @@ python scripts/notebook_smoke_test.py  # executes the actual notebooks with Spar
 
 ---
 
-## Design decisions (interview talking points)
+## Design decisions 
 
 | Decision | Alternative | Why |
 |---|---|---|
